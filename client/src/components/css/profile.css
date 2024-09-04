@@ -1,0 +1,261 @@
+/* @import '~bootstrap/dist/css/bootstrap.min.css'; */
+
+*{
+    padding:0;
+    margin:0;
+    box-sizing: border-box;
+}
+
+.profile-cont{
+       /* height: 100%; */
+       background-color: #050505;
+       color:white;
+       overflow: auto;
+}
+
+.post-data{
+    background-color: #35374B;
+}
+
+.Upper-profile-child{
+    background-color: black;
+    display:flex;
+}
+
+.profile-pic{
+    background-color: #35374B;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.record{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.Lower-profile-child{
+    height:62vh;
+    width:1140px;
+    overflow: auto;
+    background-color: black;
+    padding: 0 50px;
+}
+
+.post-div{
+    display:grid;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto auto auto;
+    height: auto;
+ }
+
+@media (min-width:1140px)
+{
+    .Upper-profile-child{
+        height: 35vh;
+        padding:50px;
+    }
+
+    .profile-pic{
+        height:150px;
+        width:150px;
+        border-radius: 80px;
+        margin-left: 200px;
+    }
+
+    .profile-pic-child
+    {
+      height: 80px;
+    }
+    
+    .user-info{
+        height:150px;
+        margin-left: 100px;
+        padding:10px;
+    }
+
+    .record{
+        height:50px;
+        width:350px;
+    }
+    
+    .rec-data{
+        font-size: 18px;
+    }
+    
+    .user-Name{
+        margin-bottom: 10px;
+    }
+
+    .post-data{
+        height:300px;
+        width:300px;
+        border-radius: 8px;
+        margin-left: 5px;
+        margin-bottom: 5px;
+    }
+
+    .post-span{
+        text-align: center;
+        margin:10px;
+        font-size: 25px;
+   }
+
+   .post-div{
+    /* height:50vh; */
+    /* width:62vw; */
+    width:915px;
+    margin: 0 auto;
+ }
+
+ .hr-profile{
+    width: 80%;
+    margin: 0 auto;
+}
+
+.post-span-div{
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    gap:300px;
+}
+
+
+}
+
+@media(max-width:1140px)
+{
+    .Upper-profile-child{
+        height: 35vh;
+        padding:50px;
+    }
+
+    .profile-pic{
+        height:80px;
+        width:80px;
+        border-radius: 80px;
+        margin-left: 100px;
+    }
+
+    .profile-pic-child
+    {
+      height: 50px;
+    }
+
+    .user-info{
+        height:150px;
+        margin-left: 100px;
+        padding:10px;
+    }
+  
+    .record{
+        height:50px;
+        width:280px;
+    }
+    
+    .rec-data{
+        font-size: 16px;
+    }
+    
+    .user-Name{
+        font-size: 25px;
+        margin-bottom: 10px;
+    }
+
+
+    .post-data{
+        height:200px;
+        width:200px;
+        border-radius: 8px;
+        margin-left: 5px;
+        margin-bottom: 5px;
+    }
+
+    .post-span{
+        text-align: center;
+        margin:10px;
+        font-size: 20px;
+   }
+
+   .post-div{
+        display:grid;
+ 
+        /* height:50vh; */
+       /* width:62vw; */
+       width:915px;
+       margin: 0 auto; 
+ }
+
+ .hr-profile{
+    width: 50%;
+    margin: 0 150px;
+  }
+
+  .post-span-div{
+    margin-left: 243px;
+    display: flex;
+    align-items: center;
+    gap: 134px;
+  }
+
+
+}
+
+
+.post-span:hover{
+    cursor:pointer;
+}
+
+
+.vid-div{
+    display:grid;
+
+    /* height:50vh; */
+    width:62vw;
+    margin: 0 auto;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto auto auto;
+    /* grid-gap: 10px; */
+    height: auto;
+    /* gap:10px; */
+    
+}
+
+.vid-data{
+    background-color: #35374B;
+    height:357.63px;
+    width:229.75px;
+    border-radius: 8px;
+    margin-left: 5px;
+    margin-bottom: 5px;
+}
+
+.diffuser-Name{
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+
+
+.foll-btn{
+    padding: 7px;
+    margin-bottom: 10px;
+    display: inline-block;
+   margin-left: 97px;
+    height:32px;
+    width:81.66px;
+    font-size: 18px;
+     text-align: center;
+    border-radius: 8px;
+    background-color: #40A2E3;
+    color:white;
+}
+
+.foll-btn:hover{
+    background-color: #068ce6;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(68, 152, 220, 0.413);
+}
+
+

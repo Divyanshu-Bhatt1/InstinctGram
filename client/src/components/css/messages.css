@@ -1,0 +1,147 @@
+*{
+    padding:0;
+    margin:0;
+    box-sizing: border-box;
+}
+
+.msg-h-cont{
+    padding:50px 25px 10px 25px;
+    
+}
+
+.friends-cont{
+    /* background-color: aquamarine; */
+    padding:10px 0px 0px 25px ;
+    height:87vh;
+    overflow-y: scroll;
+}
+
+.user-cont{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 15px;
+    height:56px;
+    width:350px;
+    /* background-color: bisque; */
+    border-radius: 8px;
+    border:0.5px solid white;
+    margin-bottom: 10px;
+}
+
+.user-cont:hover{
+    cursor: pointer;
+    /* background-color: #35374B; */
+    background-color: #57596b;
+}
+
+.user1-icon{
+    margin-left:12px;
+    height: 22px;
+    width:22px;
+    color:white;
+}
+
+.friend-name-cont{
+    height: 40px;
+    width: 80%;
+    color: white;
+    font-size: 20px;
+    
+}
+
+.friend-title{
+    color:white;
+    height:9vh;
+    /* background-color: bisque; */
+    display:flex;
+    align-items: center;
+    padding:20px;
+    border-bottom: 0.5px solid rgba(173, 179, 173, 0.867);
+}
+
+.messages{
+    height:81vh;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+}
+
+.input-field-msg{
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+
+.msg-inp{
+    height: 48px;
+    width: 96%;
+    font-size: 18px;
+    padding: 0 35px;
+    border-radius: 30px;
+    background-color: transparent;
+    color: white;
+    border: 0.2px solid white;
+}
+
+.msg-inp::placeholder {
+    color: white; 
+  
+  }
+
+.msg-inp:hover{
+    border-color: #40A2E3;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(68, 152, 220, 0.413);
+}
+
+.onlineOrOffline{
+    border-radius: 100%;
+    
+    height: 12px;
+    width: 12px;
+    margin-right: 15px;
+}
+
+.online{
+    background-color: #39b539;
+}
+
+.offline{
+    background-color: transparent;
+}
+
+.currentUser{
+    align-self: end;
+    margin-right: 10px;
+    color:white;
+
+    min-height: 40px;
+    background-color: aqua;
+    border-radius: 22px;
+    padding: 12px;
+    width: 59px;
+    height: 40p;
+    font-size: 20px;
+}
+
+.diffUser{
+    align-self: start;
+    margin-left: 10px;
+    color:white;
+
+   
+}
+
+.currentUser,.diffUser{
+    margin-top:15px;
+    width:auto;
+    min-height: auto;
+    max-width: 500px;
+    background-color: #40A2E3;
+    border-radius: 22px;
+    padding: 12px;
+    font-size: 20px;
+}
