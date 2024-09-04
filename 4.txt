@@ -1,0 +1,193 @@
+import React,{useState,useEffect,useRef} from 'react'
+import axios from 'axios'
+import Nav from './Nav';
+import "./css/explore.css";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faVideo,faImage,faTimes,faUser,faVolumeUp  ,faVolumeMute ,faPlay } from '@fortawesome/free-solid-svg-icons';
+
+export default function Explore() {
+    const [card, setCard] = useState(null);
+  const [mark, setMark] = useState(true);
+  const [page, setPage] = useState(1);
+ const [vidOrReel,setVidOrReel]=useState('')
+  const [src,setSrc]=useState('');
+  const [popUp,setPopUp]=useState(false)
+
+
+  const [vol,setVol]=useState(false)
+  const [play,setPlay]=useState(false)
+
+  const handleVol=()=>{
+    setVol(!vol);     
+ }
+
+ const handlePlay=(e)=>{
+  setPlay(!play)
+  if (e.target instanceof HTMLVideoElement) {
+    videoRef.current = e.target;
+    console.log('Clicked video:', videoRef.current);
+    if(!play)
+    {
+    videoRef.current.pause();
+    }else{
+      videoRef.current.play();
+    }
+  }
+
+ }
+
+ const videoRef = useRef(null);
+
+
+
+
+  const handleCross=()=>{
+    setPopUp(false);
+   setPlay(false);
+   setVol(false);
+  }
+
+  const handleVidOrReel=(src,what)=>{
+       console.log(src," src",what)
+       setSrc(src)
+       setVidOrReel(what)
+       setPopUp(true)
+
+  }
+
+  useEffect(()=>{
+     
+        getCard();
+        // eslint-disable-next-line
+  },[])
+
+  const getCard = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/get-explore?limit=5&page=${page}`,
+        {
+          withCredentials: true,
+        },
+      );
+
+      if (response.data.expArr.length === 0) {
+        setMark(false);
+      }
+      console.log(response.data.expArr)
+      setCard((prevCard) =>
+        prevCard
+          ? [...prevCard, ...response.data.expArr]
+          : response.data.expArr,
+      );
+      setPage(prevPage => prevPage + 1);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const style1={
+     height:'632px',
+     width:'316px',
+     borderRadius: '5px'
+  }
+
+  const style2={
+    height:'316px',
+    width:'316px',
+    borderRadius: '5px'
+  }
+
+  return (
+    <div className='home-cont' id='scrollableDiv2'>
+       {/* <h1>i am home</h1> */}
+       <div className='nav-home'>
+       <Nav/>
+       </div>
+       <div className='content-home'  style={{display:'flex', justifyContent:'center'}} >
+        {popUp&&<div className='cont-popUp'>
+                <div className='vidOrReel-popUp-cont'>
+                     {
+                       vidOrReel==='vid'?(
+                        <div className='vid-popUp-cont'>
+                        <video className='popUp-reelOrvid' muted={!vol} ref={videoRef} onClick={(e)=>{handlePlay(e)}} autoPlay loop >
+                        <source src={src} type='video/mp4'  />
+                         Your browser does not support the video tag.
+                        </video>
+                        <div className='vol-btn' onClick={handleVol}>
+                           {vol?(<FontAwesomeIcon icon={faVolumeUp} style={{color:'white' }}/>):(<FontAwesomeIcon icon={faVolumeMute} style={{ color:'white' }} />)}
+                      </div>
+                       {/* {play[index] &&<div className='play-btn'> */}
+                       {play && <div className='play-btn'>
+                           <FontAwesomeIcon style={{color:'white'}} size='2x' icon={faPlay} />
+                       </div>}
+                       </div> ):(
+                        <img src={src} alt={`picturehai`} className='popUp-reelOrvid'/>
+                       )
+                     }
+                </div>
+                <div className='comments-popUp'>
+                     <div className='explore-user-detail'>
+                     <div className='reel-user-icon-cont'>
+                  <FontAwesomeIcon className='reel-user-icon' icon={faUser} />
+                  </div>
+                  <span className='reel-user-name'>data.name</span>
+                  <div className="reel-foll-btn" >Follow</div>
+                  <div className='reel-caption-cont' >
+                      <p style={{width:'300px', height: '20px' , color:'white'}}>data.caption</p> 
+                  </div>
+                  
+                     </div>
+                </div>
+                <FontAwesomeIcon icon={faTimes} size='2x'  className='cross-btn' onClick={handleCross}/>
+        </div>}
+       {card && <InfiniteScroll
+                          dataLength={card.length}
+                          next={getCard}
+                          hasMore={mark}
+                          loader={<h4>Wait ...</h4>}
+                           endMessage={
+                             <p style={{ textAlign: "center" }}>
+                              <b>Yay! You have seen it all</b>
+                              </p>
+                            }
+                          scrollableTarget="scrollableDiv2"
+                       >
+                 {!popUp &&<div className='explore-cont' >
+
+                         {card &&card.map((item, index) => {
+                            console.log(card[0])
+                            const newPath = item.url.split("\\").slice(1).join("\\");
+                            const cycle=10;
+                            const currentStyle = index% cycle === 2 || index% cycle === 5 ? style1 : style2;
+                            
+                        
+                            
+                            return(
+                         <div className={`explore-item ${index% cycle === 2 ? 'explore-item1' : index% cycle === 5 ? 'explore-item2' : ''}`} key={index}>
+                              {item.fileType === 'video' ? (
+                                <div className='reel-cont' onClick={()=>{handleVidOrReel(`http://localhost:3001/${newPath}`,'vid')}}>
+                                       <video  style={currentStyle} >
+                                                 <source src={`http://localhost:3001/${newPath}`} type='video/mp4' />
+                                                  Your browser does not support the video tag.
+                                        </video>
+                                        <FontAwesomeIcon icon={faVideo}   className='vid-btn'/>
+                                      
+                                 </div>
+                             ) : (
+                              <div className='reel-cont' onClick={()=>{handleVidOrReel(`http://localhost:3001/${newPath}`,'img')}}>
+                                      <img src={`http://localhost:3001/${newPath}`} alt={`pic ${index + 1}`} style={currentStyle}/>
+                                      <FontAwesomeIcon icon={faImage}   className='vid-btn'/>
+                                      </div>
+                             )}
+                             
+                       </div>
+                         )})}
+                        
+                                                            
+                 </div>}
+                 </InfiniteScroll>}
+       </div>
+    </div>
+  )
+}

@@ -1,0 +1,165 @@
+import React,{useState,useCallback} from 'react'
+import Nav from './Nav'
+import './css/create.css'
+import media from './images/media.png'
+import axios from 'axios'
+
+
+
+export default function Create() {
+
+    const [title,setTitle]=useState('')
+    const [caption,setCaption]=useState('');
+    const [file, setFile] = useState(null);
+  
+
+  const handleFileChange = (e) => {
+
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+    } else {
+      console.log("No file selected");
+    }
+    
+  };
+
+
+    const handleTitle=(e)=>{
+               setTitle(e.target.value);
+    }
+
+    const handleCaption=(e)=>{
+        setCaption(e.target.value);
+}
+
+
+
+const createPost=useCallback(async()=>{
+
+ 
+    try {
+      if(file){
+        console.log(file)
+        if (file && file.type &&file.type.includes('image')) {
+            console.log('Selected file is an image');
+           await uploadImg()
+            
+            // Handle image file
+        } else if (file && file.type &&file.type.includes('video')) {
+            console.log('Selected file is a video');
+           await uploadVed()
+            // Handle video file
+        } else {
+            console.log('Selected file is neither an image nor a video',file);
+            // Handle other types if needed
+        }
+       
+         console.log('file upload successfully')
+
+      }else{
+        console.log("no file is selected")
+      }
+        
+      } catch (err) {
+        console.log('Error uploading file:', err);
+      }
+// eslint-disable-next-line
+},[file,title,caption])
+
+const uploadVed=useCallback(async()=>{
+  try {
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('title', title);
+    formData.append('caption', caption);
+    
+    
+    const data={
+      title:title,
+      caption:caption
+    }
+    console.log(data)
+    // Send the file to the backend
+    await axios.post('http://localhost:3001/upload-video', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+
+      },
+      withCredentials: true 
+    });
+    
+    alert('File uploaded successfully');
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    alert('Error uploading file');
+  }
+},[file,title,caption])
+
+const uploadImg=useCallback(async()=>{
+  try {
+    const formData = new FormData();
+    formData.append('image', file); // Assuming 'image' as the field name for the image
+    formData.append('title', title);
+    formData.append('caption', caption);
+
+    const data={
+      title:title,
+      caption:caption
+    }
+    console.log(data)
+    // Send the image to the backend
+    await axios.post('http://localhost:3001/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      withCredentials: true 
+    });
+    
+    alert('File uploaded successfully');
+   
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    alert('Error uploading image');
+  }
+},[file,title,caption])
+
+
+
+  return (
+    <div className='home-cont'>
+       {/* <h1>i am home</h1> */}
+       <div className='nav-home'>
+       <Nav/>
+       </div>
+       <div className='content-home'>
+                <div className='create-cont'>
+                         <div className='create-content-cont'>
+                                  <input type='text' value={title} onChange={handleTitle} id='title' name='title' placeholder='Enter the Title' required/>
+                                  <br/>
+                                  <br/>
+                                  <textarea type='text' value={caption} onChange={handleCaption} id='caption' name='caption' placeholder='Write the caption ...' required rows="4" cols="50"/>
+                                  <br/>
+                                  <br/>
+                                  <label className='media-upload' htmlFor='file' onChange={handleFileChange}>
+                                  
+                                       <img className='media-img' src={media} alt=''/>
+                                       <span>Drag photos and videos here </span>
+                                       <span>(only give image in jpg not in png)</span>
+                                       
+                                      <input type="file" id="file" name="file"  onChange={handleFileChange}></input> 
+                                         
+                                  </label>
+                                  <br/>
+                                  <br/>
+                                  <button onClick={createPost}>Submit</button>
+                                  
+                         </div>
+                         
+
+                </div>
+                
+       </div>
+    </div>
+  )
+}
