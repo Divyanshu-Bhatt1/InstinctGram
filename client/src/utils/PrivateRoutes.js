@@ -6,7 +6,7 @@ import  {io}  from 'socket.io-client';
 
 
 function PrivateRoutes() {
-  const { isAuthenticated, setIsAuthenticated,setUserId ,setSocket} = useStore()
+  const { setIsAuthenticated, setUserId,socket, setSocket, isAuthenticated } = useStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,10 +23,16 @@ function PrivateRoutes() {
         
               setSocket(newSocket);
 
+              newSocket.on("disconnect", () => {
+                console.log("Socket disconnected fx in Private");
+                setSocket(null)
+              });
+
               // Cleanup function to disconnect the socket when the component unmounts
       return () => {
-        if (newSocket) {
-          newSocket.disconnect();
+        if (socket) {
+          socket.disconnect();
+          alert("private Disconnection in Cleanup!")
           setSocket(null);
         }
       };
@@ -41,6 +47,55 @@ function PrivateRoutes() {
 
       checkAuthentication();
   }, []);
+
+
+  useEffect(() => {
+    // Prevent right-click context menu
+    const preventRightClick = (event) => {
+      event.preventDefault();
+    };
+
+    // Detect when DevTools might be opened
+    const detectDevTools = (threshold = 160) => {
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      return widthThreshold || heightThreshold;
+    };
+
+    const checkDevTools = async() => {
+      if (detectDevTools()) {
+
+        const response = await axios.post(`${process.env.REACT_APP_BACK_URL}/logout`, {}, {
+          withCredentials: true
+        });
+  
+        if (response.status === 200) {
+          setIsAuthenticated(false);
+          navigate('/');
+        }
+        
+        // alert("Please close developer tools!");
+        // window.location.reload()
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("contextmenu", preventRightClick);
+    window.addEventListener("resize", checkDevTools);
+
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener("contextmenu", preventRightClick);
+      window.removeEventListener("resize", checkDevTools);
+    };
+  }, []);
+
+
+
+
+
+
+
   // const auth={token:false};
   return (
         isAuthenticated

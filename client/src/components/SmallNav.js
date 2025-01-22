@@ -14,7 +14,7 @@ export default function SmallNav() {
           <Link className='link1' to='/explore' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faCompass} /></div></Link>
           <Link className='link1' to='/reels' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faFilm} /></div></Link>
           <Link className='link1' to='/messages' ><div className='nav-item' ><FontAwesomeIcon className='nav-icon' icon={faCommentDots} /></div></Link>
-          <Link className='link1' to='/notifi' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faHeart} /></div></Link>
+          {/* <Link className='link1' to='/notifi' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faHeart} /></div></Link> */}
           <Link className='link1' to='/create' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faPlus} /></div></Link>
           <Link className='link1' to='/profile' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faUser} /></div></Link>
           <Link className='link1 logOut' to='/logout' ><div className='nav-item'><FontAwesomeIcon className='nav-icon' icon={faRightFromBracket} /></div></Link>

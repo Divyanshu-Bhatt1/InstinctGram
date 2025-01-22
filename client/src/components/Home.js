@@ -1,47 +1,755 @@
-import React,{useEffect} from 'react'
+ import React,{useState,useEffect,useRef,useCallback} from 'react'
+ import { useLocation } from 'react-router-dom';
 import axios from 'axios'
-import {useNavigate} from 'react-router-dom';
-import Nav from './Nav';
 import './css/home.css'
 
+import "./css/explore.css";
 
-export default function Home() {
-  const navigate = useNavigate();
-  useEffect(()=>{
-    // checkAuth();
+import NavCompo from "./NavCompo";
 
-// eslint-disable-next-line
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faVideo,faImage,faTimes,faUser,faVolumeUp  ,faVolumeMute ,faPlay ,faHeart,faComment,faPaperPlane,faCheck} from '@fortawesome/free-solid-svg-icons';
+import useStore from '../utils/store';
+
+import InfiniteScroll from "react-infinite-scroll-component";
+import DiffProfile from './DiffProfile';
+
+
+
+// export default function Home() {
+//   const navigate = useNavigate();
+//   useEffect(()=>{
+//     // checkAuth();
+
+// // eslint-disable-next-line
+// },[])
+
+// const checkAuth = async () => {
+//   try {
+//     const response = await axios.get(`${process.env.REACT_APP_BACK_URL}/isLogin`, {
+//       withCredentials: true 
+//     });
+    
+//     if (response.status !== 200) {
+//       navigate('/');
+//     } else {
+//       console.log("You are successfully logged in!");
+//     }
+//   } catch (error) {
+//     console.error("Error checking authentication:", error);
+//     navigate('/');
+//   }
+// };
+
+
+
+//   return (
+//     <div className='home-cont'>
+//        {/* <h1>i am home</h1> */}
+//        <div className='nav-home'>
+//        <Nav/>
+//        </div>
+//        <div className='content-home'>
+                
+//                 <h1>Hello</h1>
+//        </div>
+//     </div>
+//   )
+// }
+
+  
+  
+  export default function Home(){
+    const {userId ,socket} = useStore()
+    const [popUp,setPopUp]=useState(false)
+    
+    const [scrollPosition, setScrollPosition] = useState(0);
+    const location = useLocation();
+  
+    const scrollRef = useRef(null);  // Adding useRef to track scrollable div
+
+    useEffect(() => {
+      if(!popUp){
+        // const storedScrollPosition = sessionStorage.getItem(location.pathname);
+        console.log(popUp,scrollPosition)
+        // if (scrollRef.current && storedScrollPosition) {
+        //     scrollRef.current.scrollTop = parseInt(storedScrollPosition, 10);
+        // }
+
+        const reelContainer = document.getElementById('scrollableDiv2'); // Get the element by ID
+        if (reelContainer) {
+            reelContainer.scrollTop = scrollPosition; // Set scrollTop to the specified position
+        }
+
+      }
+    }, [popUp]);
+
+    const handleSlide = () => {
+        // const reelContainer = scrollRef.current;
+        // const scrollPos = reelContainer.scrollTop;
+        // setScrollPosition(scrollPos);
+        // // sessionStorage.setItem(location.pathname, scrollPos.toString());
+        // console.log(scrollPos," yo")
+
+        const reelContainer = document.getElementById('scrollableDiv2');
+        const scrollPos = reelContainer.scrollTop;
+        setScrollPosition(scrollPos);
+        // sessionStorage.setItem(location.pathname, scrollPos.toString());
+        console.log(scrollPos," yo")
+
+        
+    };
+      
+  
+  
+    const [what1,setWhat1]=useState('')
+      const [card, setCard] = useState(null);
+    const [mark, setMark] = useState(true);
+    const [page, setPage] = useState(1);
+   const [vidOrReel,setVidOrReel]=useState('')
+    const [src,setSrc]=useState('');
+    // const [popUp,setPopUp]=useState(false)
+    const [vol,setVol]=useState(false)
+    const [play,setPlay]=useState(false)
+  
+    const [addi,setAddi]=useState(null)
+    const [expanded,setExpanded]=useState(false)
+    const [cmtText,setCmtText]=useState('');
+    const [like,setLike]=useState(false)
+  
+    const [mark1,setMark1]=useState(true);
+    const [page1, setPage1] = useState(1);
+    const [actCmt,setActCmt]=useState(null);
+   
+    const handleComment=(e)=>{
+             setCmtText(e.target.value)
+    }
+  
+    const handleSubmit=async(e,id)=>{
+      if(e.key==='Enter')
+      {
+          console.log("post hoga ab")
+          await postCmt(id)
+           setActCmt(null)
+           setPage1(1);
+           
+           await getComments(id,1)
+          // postCmt(id)
+      }
+  }
+  
+  
+  
+  const postCmt=async(id)=>{
+    try {
+      const formData = new FormData();
+      formData.append('id',id); 
+      formData.append('cmtText', cmtText);
+  
+      setCmtText('')
+  
+      
+      if(what1==='vid'){
+      const result = await axios.post(`${process.env.REACT_APP_BACK_URL}/comment`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data' // Correct Content-Type for FormData
+        },
+        withCredentials: true 
+      });
+      console.log(result)
+    }else if((what1==='img')){
+      const result = await axios.post(`${process.env.REACT_APP_BACK_URL}/comment-post`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data' // Correct Content-Type for FormData
+        },
+        withCredentials: true 
+      });
+      console.log(result)
+    }
+      
+      // console.log(result.data.name)
+      // setActCmt(prevComments => [...prevComments, { comment: result.data.comment, postedBy:result.data.postedBy, name: result.data.name?result.data.name : 'Unknown' }]);
+      
+     
+     
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error uploading image');
+    }
+  }
+  
+   const getComments=async(id,val=page1,what=what1)=>{
+    console.log("Page : ",what)
+    try {
+    console.log("Page : ",val,page1,id,vidOrReel)
+  
+    
+  
+    if(what==='vid')
+    {
+     let response = await axios.get(
+      `${process.env.REACT_APP_BACK_URL}/getComments?id=${id}&page=${val}`,
+      {
+        withCredentials: true,
+      },
+    );
+  
+    if( response.data.cmtArr.length===0)
+    {
+         setMark1(false);
+    }
+    // console.log(response.data)
+    if(response.data && response.data.cmtArr){
+    setActCmt((prevCard) =>
+          prevCard
+            ? [...prevCard, ...response.data.cmtArr]
+            : response.data.cmtArr,
+        );
+  
+    setPage1(prevPage1 => prevPage1 + 1);
+    }
+    
+  
+    }else if(what==='img'){
+     let response = await axios.get(
+        `${process.env.REACT_APP_BACK_URL}/getCommentsPost?id=${id}&page=${val}`,
+        {
+          withCredentials: true,
+        },
+      );
+  
+      if( response.data.cmtArr.length===0)
+      {
+           setMark1(false);
+      }
+      // console.log(response.data)
+      if(response.data && response.data.cmtArr){
+      setActCmt((prevCard) =>
+            prevCard
+              ? [...prevCard, ...response.data.cmtArr]
+              : response.data.cmtArr,
+          );
+    
+      setPage1(prevPage1 => prevPage1 + 1);
+      }
+      
+  
+    }
+  
+  
+  } catch (error) {
+    console.log(error);
+  }
+   }
+  
+  
+  
+  
+  const handleLike=async(id)=>{
+    console.log(id,"hai",what1,"hai")
+    setLike(!like)
+      if(like===true)
+      {
+        try { 
+          const response = await axios.get(
+            `${process.env.REACT_APP_BACK_URL}/UnLike-${what1}?id=${id}`,
+            {
+              withCredentials: true,
+            },
+          );
+           
+          console.log(response.status," ",response.data)
+          
+        } catch (error) {
+          console.log(error);
+        }
+      }else{
+        try { 
+          const response = await axios.get(
+            `${process.env.REACT_APP_BACK_URL}/Like-${what1}?id=${id}`,
+            {
+              withCredentials: true,
+            },
+          );
+           
+          console.log(response.status," ",response.data)
+          
+        } catch (error) {
+          console.log(error);
+        }
+      }
+  }
+  
+  
+    const handleExp=()=>{
+          setExpanded(!expanded)
+    }
+  
+  //   const handleVol=()=>{
+  //     setVol(!vol);     
+  //  }
+  
+  //  const handlePlay=(e)=>{
+  //   setPlay(!play)
+  //   if (e.target instanceof HTMLVideoElement) {
+  //     videoRef.current = e.target;
+  //     console.log('Clicked video:', videoRef.current);
+  //     if(!play)
+  //     {
+  //     videoRef.current.pause();
+  //     }else{
+  //       videoRef.current.play();
+  //     }
+  //   }
+  
+  //  }
+  
+   const videoRef = useRef(null);
+  
+  
+  
+  
+    const handleCross=()=>{
+      // setAddi(null)
+      setExpanded(false)
+      setPopUp(false);
+     setPlay(false);
+    //  setVol(false);
+  
+     setPage1(1);
+     setActCmt(null);
+    //  window.scrollTo(0, parseInt(scrollPosition, 10));
+    }
+  
+    const handleVidOrReel=async(src,what,id)=>{
+        //  console.log(src," src",what," ",id)
+         setWhat1(what)
+         await additionalData(id,what)
+         setSrc(src)
+         setVidOrReel(what)
+         setPopUp(true)
+         console.log(what)
+         await getComments(id,page1,what)
+  
+    }
+  
+    const additionalData=async(id,what)=>{
+      try {
+        let response = await axios.get(
+            `${process.env.REACT_APP_BACK_URL}/additionalData-${what}?id=${id}`,
+            {
+              withCredentials: true,
+            },
+          );
+        if(response.status===200){
+        setAddi(response.data.addiArr)
+        console.log(response.data.likedByCurrentUser,"bta")
+        setLike(response.data.likedByCurrentUser)
+        }
+  
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  
+    useEffect(()=>{
+       
+          getCard();
+          // eslint-disable-next-line
+    },[])
+  
+    const getCard = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACK_URL}/get-posts?limit=5&page=${page}`,
+          {
+            withCredentials: true,
+          },
+        );
+  
+        if (response.data.expArr.length === 0) {
+          setMark(false);
+        }
+        console.log(response.data.expArr)
+        setCard((prevCard) =>
+          prevCard
+            ? [...prevCard, ...response.data.expArr]
+            : response.data.expArr,
+        );
+        setPage(prevPage => prevPage + 1);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+  
+  
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  
+    useEffect(() => {
+      const handleResize = () => {
+        setWindowWidth(window.innerWidth);
+      };
+  
+      window.addEventListener('resize', handleResize);
+  
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }, []);
+  
+    const style1 = {
+      height: windowWidth > 1110 ? '632px' : '433.974px',
+      width: windowWidth > 1110 ? '316px' : '216px',
+      borderRadius: '5px'
+    };
+  
+    const style2 = {
+      height:windowWidth > 1110 ? '316px':'216px',
+      width: windowWidth > 1110 ?'316px':'216px',
+      borderRadius: '5px'
+    };
+  
+    // const style1={
+    //    height:'632px',
+    //    width:'316px',
+    //    borderRadius: '5px'
+    // }
+  
+    // const style2={
+    //   height:'316px',
+    //   width:'316px',
+    //   borderRadius: '5px'
+    // }
+
+    const [difPersonId,setDifPersonId]=useState(null);
+
+const [idClick,setIdClick]=useState(false);
+
+const handleIdClick=(id)=>{
+  setDifPersonId(id)
+  setIdClick(true);
+  
+}
+
+useEffect(()=>{
+   getFriends()
 },[])
 
-const checkAuth = async () => {
-  try {
-    const response = await axios.get(`${process.env.REACT_APP_BACK_URL}/isLogin`, {
-      withCredentials: true 
-    });
-    
-    if (response.status !== 200) {
-      navigate('/');
-    } else {
-      console.log("You are successfully logged in!");
-    }
-  } catch (error) {
-    console.error("Error checking authentication:", error);
-    navigate('/');
+
+const [friends,setFriends]=useState([])
+
+const getFriends=async()=>
+  {
+       try {
+              const response = await axios.get(
+                `${process.env.REACT_APP_BACK_URL}/getFriends`,
+                {
+                  withCredentials: true,
+                },
+              );
+            
+              
+
+              setFriends((prevCard) =>
+                prevCard
+                  ? [...prevCard, ...response.data.friendsArr]
+                  : response.data.friendsArr,
+              );
+
+              response.data.friendsArr.map((friend)=>{
+                return(
+                  handleOnlineOrOffline(friend._id,friend.isOnline)
+                )
+              })
+              
+            } catch (error) {
+              console.log(error);
+            }
   }
-};
+  
+  const [shareId,setShareId]=useState()
+  const [share,setShare]=useState(false);
+  
+
+  const handleShareEnable=(id)=>{
+    setPopUp(false)
+    setShareId(id)
+    setShare(true)
+  }
+  const [onlineOrOffline,setOnlineOrOffline]=useState({})
+  const handleOnlineOrOffline = useCallback((user_id, isOnline) => {
+
+    setOnlineOrOffline(prevStatus => ({
+      ...prevStatus,
+      [user_id]: isOnline,
+    }));
+    
+  }, [onlineOrOffline]);
+
+
+  
+  const [selectedFriends, setSelectedFriends] = useState([]);
+
+  // Handle friend selection
+  const handleFriendClick = (friendId) => {
+    setSelectedFriends((prevSelected) =>
+      prevSelected.includes(friendId)
+        ? prevSelected.filter((id) => id !== friendId) // Deselect if already selected
+        : [...prevSelected, friendId] // Add if not selected
+    );
+  };
+
+ const handleSendCross=()=>
+  {
+    setFriends(null)
+    getFriends()
+    setSelectedFriends([]);
+    setShare(false);
+  }
+
+  const handleSendPostToFriends = async () => {
+    
+    setShare(false)
+
+     console.log(userId)
+      // const data = {
+      //   sender_id: myId,
+      //   receiver_id: friendId,
+      //   messages: shareId,
+      // };
+  
+    alert("Post is send to the friends !")
+    // console.log(selectedFriends)
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACK_URL}/sendPostToFriends`,
+        {
+          shareId,
+          friendIds: selectedFriends,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+
+  
+      if (response.status === 200) {
+        console.log('Post sent successfully!');
+
+        selectedFriends.forEach(id => {
+          socket?.emit("newChats", {
+            sender_id: userId,
+            receiver_id: id,
+            messages: shareId
+          });
+        });
+        // socket?.emit("newChats", data);
+      } else {
+        console.error('Failed to send post');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+  
 
 
 
-  return (
-    <div className='home-cont'>
-       {/* <h1>i am home</h1> */}
-       <div className='nav-home'>
-       <Nav/>
+  
+    return (
+      <div className='home-cont' id='scrollableDiv2' ref={scrollRef}>
+         {/* <h1>i am home</h1> */}
+         <div className='nav-home'>
+         <NavCompo/>
+         </div>
+
+         
+
+         {!idClick &&<div className='content-home'  style={{display:'flex', justifyContent:'center'}} >
+
+          {(popUp)&&<div className='cont-popUp'>
+
+
+                  <div className='vidOrReel-popUp-cont'>
+                       
+                          <img src={src} alt={`picturehai`} className='popUp-reelOrvid'/>
+                         
+                    
+                  </div>
+                  <div className='comments-popUp'>
+                       <div className='explore-user-detail' style={{height: expanded ? '20vh' : '13vh'}}>
+                       <div className='reel-user-icon-cont' onClick={()=>{handleIdClick(addi.userId)}}>
+                    <FontAwesomeIcon className='reel-user-icon' icon={faUser} />
+                    </div>
+                    <span className='reel-user-name' onClick={()=>{handleIdClick(addi.userId)}}>{addi.name}</span>
+                    {!addi.isSameUser &&<div className="reel-foll-btn" >Follow</div>}
+                    <div className='reel-caption-cont'  style={{ height: expanded ? '80px' : '20px', width:'32vw', overflowY: expanded ?  'scroll': 'hidden', transition: 'height 0.3s ease' }}>
+                        <p style={{ height: '20px' ,width:'29vw' , color:'white'}}>{addi.caption}</p> 
+                    </div>
+                    {!expanded && addi.caption.length>62 && <span className='more-btn' style={{left:'432px'}}onClick={() => handleExp()}>More ...</span>}
+                    
+                       </div>
+  
+                    <div className='exp-cmt-cont' id="scrollableDiv4" style={{ height: expanded ? '55vh' : '62vh' ,overflowY:'scroll',padding:'10px'}}>
+                    {actCmt && <InfiniteScroll
+                            dataLength={actCmt?.length}
+                            next={()=>{getComments(addi._id)}}
+                            hasMore={mark1}
+                            loader={<h4>Wait ...</h4>}
+                          
+                            //  endMessage={
+                            //    <p style={{ textAlign: "center" }}>
+                            //     <b>Yay! You have seen it all</b>
+                            //     </p>
+                            //   }
+                            scrollableTarget="scrollableDiv4"
+                           
+                         >
+  
+                      {actCmt && actCmt.map((item, id) => (
+                        <div key={id} style={{marginBottom: '8px'}}>
+                         <p style={{fontSize:'18px',fontWeight:'200',color:'white'}}> <span className='cmt-name' style={{fontSize:'18px',fontWeight:'600', margin:'0 10px'}} onClick={()=>{handleIdClick(item.postedBy)}}>{item.name}: </span>
+                                {item.comment}
+                          </p>
+                        </div>
+                      ))}  
+                      </InfiniteScroll>  } 
+                    </div>
+  
+                    <div className='exp-icon-cont' style={{backgroundColor: '#35374B',borderBottom:'1px solid white'}}>
+                         
+                      
+                    <div className='exp-other-cont'>
+                  <div className='individual-icon'>
+                  <FontAwesomeIcon style={{color:!like?'white':'#ff3a33', fontSize:'24px'} }  icon={faHeart} onClick={()=>{handleLike(addi._id)}}/>
+                 
+                  </div>
+  
+                  <div className='individual-icon'>
+                  <FontAwesomeIcon style={{ fontSize:'24px'} }   icon={faComment} />
+            
+                  </div>
+  
+                  <div className='individual-icon'>
+                  <FontAwesomeIcon  style={{fontSize:'24px'} }   icon={faPaperPlane}   onClick={()=>{handleShareEnable(addi._id)}}/>
+                  
+                  </div>
+             </div>
+  
+  
+  
+                    </div>
+                    <input type='text' className='exp-comment-inp' onChange={handleComment} onKeyDown={(e)=>{handleSubmit(e,addi._id)}} value={cmtText}></input>
+                  </div>
+                  <FontAwesomeIcon icon={faTimes} size='2x'  className='cross-btn' onClick={handleCross}/>
+          </div>}
+
+
+          
+         {!popUp && card && <InfiniteScroll
+                            dataLength={card.length}
+                            next={getCard}
+                            hasMore={mark}
+                            loader={<h4>Wait ...</h4>}
+                             endMessage={
+                               <p style={{ textAlign: "center" }}>
+                                <b>Yay! You have seen it all</b>
+                                </p>
+                              }
+                            scrollableTarget="scrollableDiv2"
+                            className='Scroll-Compo'
+                            onScroll={handleSlide}
+                         >
+                   {!popUp &&<div className='post-cont' >
+  
+                           {card &&card.map((item, index) => {
+                              
+                              const newPath = item.url.split("\\").slice(1).join("\\");
+                             
+                              
+                          
+                              
+                              return(
+                          
+                                <div className='indiv-post-cont'>  
+                                {/* <div className='indiv-post-cont' onClick={()=>{handleVidOrReel(`${process.env.REACT_APP_BACK_URL}/${newPath}`,'img',item._id)}}> */}
+                                 
+                                <div className='post-Detail1' >
+                  
+                                             <div className='reel-user-icon-cont' onClick={()=>{handleIdClick(item.userId)}}>
+                                             <FontAwesomeIcon className='reel-user-icon' icon={faUser} />
+                                             </div>
+                                             <span className='reel-user-name' onClick={()=>{handleIdClick(item.userId)}}>{item.name}</span>
+                                            {item.userId!=userId && <div className="reel-foll-btn" >Follow</div>}
+              
+                                </div>
+
+
+
+                                       <div className='post-cont-img' style={{cursor:'pointer'}}  onClick={()=>{handleVidOrReel(`${process.env.REACT_APP_BACK_URL}/${newPath}`,'img',item._id)}}>
+                                        <img src={`${process.env.REACT_APP_BACK_URL}/${newPath}`} alt={`pic ${index + 1}`} />
+                                        {/* <FontAwesomeIcon icon={faImage}   className='vid-btn'/> */}
+                                        </div>
+
+
+                                <div className='descrip-post'>
+                                      <p style={{height:'55px',overflow: 'hidden', marginBottom:0}}><span style={{fontWeight: 600}}>{item.name}</span>  {item.caption}</p>
+                                      {/* item.caption.length */}
+                                       {item.caption.length>35 && <div className='more-btn-post' onClick={()=>{handleVidOrReel(`${process.env.REACT_APP_BACK_URL}/${newPath}`,'img',item._id)}}>More ...</div>}
+                                </div>
+
+
+                                      </div>
+
+                               
+                               
+                               
+                        
+                           )})}
+
+                      
+
+
+                          
+                                                              
+                   </div>}
+                   </InfiniteScroll>}
+
+                   {share&& <div className='friends-cont-pop'>
+  <FontAwesomeIcon className='Close-pop' style={{color:'white' }} size='2x' icon={faTimes} onClick={()=>{handleSendCross()}}/>
+
+    <div className='friends-cont-pop-ch'> 
+
+{ friends.map((friend,id)=>{
+                 return(
+   <div className='user-cont-pop' key={id} data-id={friend._id} onClick={() => handleFriendClick(friend._id)}>
+       <FontAwesomeIcon className='user1-icon' icon={faUser} />
+       <div className='friend-name-cont'>
+          <p>{friend.name}</p> 
        </div>
-       <div className='content-home'>
-                
-                <h1>Hello</h1>
-       </div>
-    </div>
-  )
-}
+       <div className={`onlineOrOffline ${onlineOrOffline[friend._id] ? 'online' : 'offline'}`}></div>
+       {selectedFriends.includes(friend._id) && (
+            <FontAwesomeIcon className="blue-tick" icon={faCheck}  />
+          )}
+   </div> 
+  )})} 
+
+  </div> 
+  <div className='send-btn' onClick={()=>{handleSendPostToFriends()}}>Send</div>
+
+</div>}
+
+
+         </div>}
+
+ 
+         
+         {idClick && <div className='content-home'  style={{display:'flex', justifyContent:'center'}} >
+         <DiffProfile diffId={difPersonId}/>
+         </div>
+         }
+      </div>
+    )
+  }
+  

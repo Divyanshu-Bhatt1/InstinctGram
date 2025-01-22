@@ -206,7 +206,7 @@ export default function DiffProfile(props) {
                 <span className="rec-data">followers:{noOfFollowers}</span>
                 <span className="rec-data">following:{noOfFollowing}</span>
               </div>
-              <span className="rec-data" style={{fontSize:'20px'}}>{privateOrPublic} Account</span>
+              {/* <span className="rec-data" style={{fontSize:'20px'}}>{privateOrPublic} Account</span> */}
             </div>
           </div>
           <hr className="hr-profile"></hr>

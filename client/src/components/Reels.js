@@ -5,12 +5,13 @@ import './css/reels.css'
 import axios from "axios";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faVolumeUp,faTimes ,faUser ,faVolumeMute ,faPlay,faHeart,faComment,faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import { faVolumeUp,faTimes ,faUser ,faVolumeMute ,faPlay,faHeart,faComment,faPaperPlane,faCheck } from '@fortawesome/free-solid-svg-icons';
 import useStore from '../utils/store';
+import DiffProfile from './DiffProfile';
 
 export default function Reels() {
 
-  const {userId } = useStore()
+  const {userId ,socket} = useStore()
 
 
   const [reel, setReel] = useState(null);
@@ -27,6 +28,7 @@ export default function Reels() {
   const [commentOnOrOff,setCommentOnOrOff]=useState([])
   const [cmtText,setCmtText]=useState('');
   const [actCmt,setActCmt]=useState(null);
+  const [friends,setFriends]=useState([])
 
   const handleComment=(e)=>{
            setCmtText(e.target.value)
@@ -245,6 +247,7 @@ const handleSlide = useCallback(() => {
   useEffect(()=>{
         
         getReel();
+        getFriends()
         // eslint-disable-next-line
   },[])
 
@@ -308,6 +311,132 @@ const handleSlide = useCallback(() => {
     }
 }, [currentIndex, reel,videoRefs]);
 
+const [difPersonId,setDifPersonId]=useState(null);
+
+const [idClick,setIdClick]=useState(false);
+
+const handleIdClick=(id)=>{
+  setDifPersonId(id)
+  setIdClick(true);
+  
+}
+
+
+const getFriends=async()=>
+  {
+       try {
+              const response = await axios.get(
+                `${process.env.REACT_APP_BACK_URL}/getFriends`,
+                {
+                  withCredentials: true,
+                },
+              );
+            
+              
+
+              setFriends((prevCard) =>
+                prevCard
+                  ? [...prevCard, ...response.data.friendsArr]
+                  : response.data.friendsArr,
+              );
+
+              response.data.friendsArr.map((friend)=>{
+                return(
+                  handleOnlineOrOffline(friend._id,friend.isOnline)
+                )
+              })
+              
+            } catch (error) {
+              console.log(error);
+            }
+  }
+  
+  const [shareId,setShareId]=useState()
+  const [share,setShare]=useState(false);
+  
+
+  const handleShareEnable=(id)=>{
+    setShareId(id)
+    setShare(true)
+  }
+  const [onlineOrOffline,setOnlineOrOffline]=useState({})
+  const handleOnlineOrOffline = useCallback((user_id, isOnline) => {
+
+    setOnlineOrOffline(prevStatus => ({
+      ...prevStatus,
+      [user_id]: isOnline,
+    }));
+    
+  }, [onlineOrOffline]);
+
+
+  
+  const [selectedFriends, setSelectedFriends] = useState([]);
+
+  // Handle friend selection
+  const handleFriendClick = (friendId) => {
+    setSelectedFriends((prevSelected) =>
+      prevSelected.includes(friendId)
+        ? prevSelected.filter((id) => id !== friendId) // Deselect if already selected
+        : [...prevSelected, friendId] // Add if not selected
+    );
+  };
+
+ const handleSendCross=()=>
+  {
+    setFriends(null)
+    getFriends()
+    setSelectedFriends([]);
+    setShare(false);
+  }
+
+  const handleSendPostToFriends = async () => {
+    
+    setShare(false)
+
+     console.log(userId)
+      // const data = {
+      //   sender_id: myId,
+      //   receiver_id: friendId,
+      //   messages: shareId,
+      // };
+  
+    alert("Post is send to the friends !")
+    // console.log(selectedFriends)
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACK_URL}/sendPostToFriends`,
+        {
+          shareId,
+          friendIds: selectedFriends,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+
+  
+      if (response.status === 200) {
+        console.log('Post sent successfully!');
+
+        selectedFriends.forEach(id => {
+          socket?.emit("newChats", {
+            sender_id: userId,
+            receiver_id: id,
+            messages: shareId
+          });
+        });
+        // socket?.emit("newChats", data);
+      } else {
+        console.error('Failed to send post');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+  
+
 
   return (
     <div className='home-cont'>
@@ -315,8 +444,9 @@ const handleSlide = useCallback(() => {
        <div className='nav-home'>
        <NavCompo/>
        </div>
+
        <div className='content-home'>
-               <div className='reels-cont' >
+               {!idClick ?(<div className='reels-cont' >
                     
                <div className='reels-child' >     
                     {reel && <InfiniteScroll
@@ -350,10 +480,10 @@ const handleSlide = useCallback(() => {
             </video>
             <div className='post-Detail' style={{height: expanded[index] ? '150px' : '100px'}}>
                   
-                  <div className='reel-user-icon-cont'>
+                  <div className='reel-user-icon-cont' onClick={()=>{handleIdClick(data.userId)}}>
                   <FontAwesomeIcon className='reel-user-icon' icon={faUser} />
                   </div>
-                  <span className='reel-user-name'>{data.name}</span>
+                  <span className='reel-user-name' onClick={()=>{handleIdClick(data.userId)}}>{data.name}</span>
                  {data.userId!=userId && <div className="reel-foll-btn" >Follow</div>}
                   <div className='reel-caption-cont'  style={{ height: expanded[index] ? '110px' : '20px', overflowY: expanded[index] ?  'scroll': 'hidden', transition: 'height 0.3s ease' }}>
                       <p style={{width:'300px', height: '20px' , color:'white'}}>{data.caption}</p> 
@@ -385,12 +515,14 @@ const handleSlide = useCallback(() => {
                 <span>Comment</span>
                 </div>
 
-                <div className='individual-icon'>
-                <FontAwesomeIcon  style={{fontSize:'24px'} }   icon={faPaperPlane}   />
+                <div className='individual-icon' >
+                <FontAwesomeIcon  style={{fontSize:'24px'} }   icon={faPaperPlane}  onClick={()=>{handleShareEnable(data._id)}} />
                 <br></br>
                 <span>Share</span>
                 </div>
            </div>
+
+          
 
            {commentOnOrOff[index]&& <div className='comment-cont'>
                     <div className='comment-header'>
@@ -416,7 +548,7 @@ const handleSlide = useCallback(() => {
 
                     {actCmt && actCmt.map((item, id) => (
                       <div key={id} style={{marginBottom: '8px'}}>
-                       <p style={{fontSize:'18px',fontWeight:'200',color:'white'}}> <span style={{fontSize:'18px',fontWeight:'600', margin:'0 10px'}}>{item.name}: </span>
+                       <p style={{fontSize:'18px',fontWeight:'200',color:'white'}}> <span className='cmt-name' style={{fontSize:'18px',fontWeight:'600', margin:'0 10px',cursor:'pointer'}} onClick={()=>{handleIdClick(item.postedBy)}}>{item.name}: </span>
                               {item.comment}
                         </p>
                       </div>
@@ -428,16 +560,47 @@ const handleSlide = useCallback(() => {
                     <input type='text' className='comment-inp' onChange={handleComment} onKeyDown={(e)=>{handleSubmit(e,data._id)}} value={cmtText}></input>
            </div>}
 
+            
+
            </div>
         );
     })
 }
 
+{share&& <div className='friends-cont-pop'>
+  <FontAwesomeIcon className='Close-pop' style={{color:'white' }} size='2x' icon={faTimes} onClick={()=>{handleSendCross()}}/>
+
+    <div className='friends-cont-pop-ch'> 
+
+{ friends.map((friend,id)=>{
+                 return(
+   <div className='user-cont-pop' key={id} data-id={friend._id} onClick={() => handleFriendClick(friend._id)}>
+       <FontAwesomeIcon className='user1-icon' icon={faUser} />
+       <div className='friend-name-cont'>
+          <p>{friend.name}</p> 
+       </div>
+       <div className={`onlineOrOffline ${onlineOrOffline[friend._id] ? 'online' : 'offline'}`}></div>
+       {selectedFriends.includes(friend._id) && (
+            <FontAwesomeIcon className="blue-tick" icon={faCheck}  />
+          )}
+   </div> 
+  )})} 
+
+  </div> 
+  <div className='send-btn' onClick={()=>{handleSendPostToFriends()}}>Send</div>
+
+</div>}
                              </div>
                              </InfiniteScroll>}
+
+
+
                     </div>
 
-               </div>
+               </div>):(<DiffProfile diffId={difPersonId} />)}
+
+
+
       </div>
 
       </div>

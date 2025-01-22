@@ -217,13 +217,13 @@ export default function Card() {
                 <span className="rec-data">followers:{noOfFollowers}</span>
                 <span className="rec-data">following:{noOfFollowing}</span>
               </div>
-              <div  style={{display:'flex', gap:'20px',marginTop:'12px'}}>
+              {/* <div  style={{display:'flex', gap:'20px',marginTop:'12px'}}>
               <div className="form-check form-switch">
                    <input ref={checkboxRef} onChange={handleButtonClick} className="form-check-input" style={{width:'40px'}} type="checkbox" id="flexSwitchCheckDefault" />
                    
                 </div>
                <span className="rec-data" style={{fontSize:'20px'}}>{privateOrPublic}</span>
-              </div>
+              </div> */}
             </div>
           </div>
           <hr className="hr-profile"></hr>

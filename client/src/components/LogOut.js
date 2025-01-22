@@ -2,10 +2,11 @@ import React,{useEffect} from 'react'
 import Nav from './Nav';
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
-
+import useStore from '../utils/store';
 
 export default function LogOut({setIsLoggedIn}) {
     const navigate = useNavigate();
+    const {  socket, setSocket} = useStore();
   useEffect(()=>{
     
      sureOrNot();
@@ -22,6 +23,11 @@ export default function LogOut({setIsLoggedIn}) {
         });
   
         if (response.status === 200) {
+          if (socket) {
+            socket.disconnect();
+            setSocket(null); // Clear the socket from Zustand
+            console.log("Socket disconnected on logout");
+          }
           setIsLoggedIn(false);
           navigate('/');
         } else {

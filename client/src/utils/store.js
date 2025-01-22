@@ -7,7 +7,7 @@ const useStore=create((set)=>(
         userId:null,
         setUserId:(id) => set({ userId: id }),
         socket:null,
-        setSocket:(socket) => set({ socket: socket })
+        setSocket:(socketI) => set({ socket: socketI })
 
     }
 ))

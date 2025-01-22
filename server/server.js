@@ -107,7 +107,7 @@ const userSchema = new Schema({
   }],
   privateOrPublic:{
     type:String,
-    default:'private'
+    default:'public'
   }
 });
 
@@ -142,7 +142,7 @@ const Chat=mongoose.model('chat',chatSchema)
 
 
 const reelSchema=new Schema({
-  userId:{ type: mongoose.Schema.Types.ObjectId, ref: 'User' },  
+  userId:{ type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     name:{
         type:String,
         required:true
@@ -255,21 +255,38 @@ const Post=mongoose.model('post',postSchema);
 // })
 
 
+// app.get('/check-token', (req, res) => {
+//   const token = req.cookies.token;
+//   if (!token) {
+//       return res.status(401).json({ message: 'No token provided' });
+//   }
+
+//   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+//       if (err) {
+//           return res.status(401).json({ message: 'Invalid or expired token' });
+//       }
+
+//       // console.log(decoded)
+
+      
+//       res.status(200).json({ message: 'Token is valid', user: decoded });
+//   });
+// });
+
+
 app.get('/check-token', (req, res) => {
   const token = req.cookies.token;
+
   if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
+    return res.status(401).json({ message: 'No token provided' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err) {
-          return res.status(401).json({ message: 'Invalid or expired token' });
-      }
+    if (err) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
 
-      // console.log(decoded)
-
-      
-      res.status(200).json({ message: 'Token is valid', user: decoded });
+    return res.status(200).json({ message: 'Token is valid', user: decoded });
   });
 });
 
@@ -418,21 +435,39 @@ try{
 //      res.status(200).send("logout successfull")
 // })
 
-app.post('/logout',auth, (req, res) => {
-  try{
-  // Clear the JWT cookie
-  res.clearCookie('token', {
-    httpOnly: true,
-    // secure: process.env.NODE_ENV === 'production', // Ensure secure flag in production
-    secure:false,
-    sameSite: 'strict',
-  });
-  res.status(200).json({ message: 'Logged out successfully' });
-}catch(error)
-{
-  console.log("Error occured during logged in")
-}
+// app.post('/logout',auth, (req, res) => {
+//   try{
+//   // Clear the JWT cookie
+//   res.clearCookie('token', {
+//     httpOnly: true,
+//     // secure: process.env.NODE_ENV === 'production', // Ensure secure flag in production
+//     secure:false,
+//     sameSite: 'strict',
+//   });
+//   res.status(200).json({ message: 'Logged out successfully' });
+// }catch(error)
+// {
+//   console.log("Error occured during logged in")
+// }
+// });
+
+
+app.post('/logout', auth, (req, res) => {
+  try {
+    // Clear the JWT cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Ensure secure flag in production
+      sameSite: 'strict',
+    });
+
+    return res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Error occurred during logout:', error);
+    return res.status(500).json({ message: 'An error occurred during logout' });
+  }
 });
+
 
 app.post('/upload-video',upload.single('video'),auth, async(req, res) => {
     // Handle the uploaded video
@@ -542,7 +577,7 @@ const createPost=async(data)=>{
   
       }
 
-      app.get('/getProfilePost',auth,async(req,res)=>{
+  app.get('/getProfilePost',auth,async(req,res)=>{
 
         try{
         let page=Number(req.query.page) || 1;
@@ -745,6 +780,42 @@ const createPost=async(data)=>{
       }
       })
 
+
+      app.get('/get-posts',auth,async(req,res)=>{
+        try{
+          let page=Number(req.query.page) || 1;
+          let limit=Number(req.query.limit) || 5; 
+  
+          let skip=(page-1)*limit;
+          
+         
+  
+        const UserPost1 = await Post.find({}).skip(skip).limit(5)
+
+      const expArr = UserPost1.map(post => {
+        return {
+            name: post.name,
+            caption: post.caption,
+            url: post.url,
+            uplodeDate: post.uplodeDate,
+            fileType: post.fileType,
+            userId:post.userId,
+            _id:post._id
+        };
+    }) || null;
+  
+          
+  
+          res.status(200).send({message:'ok',expArr:expArr})
+          
+        }catch(error)
+        {
+          return res.status(401).json({ message: 'Invalid or expired token' });
+        }
+      })
+
+
+
       app.get('/get-explore',auth,async(req,res)=>{
         try{
         let page=Number(req.query.page) || 1;
@@ -888,16 +959,24 @@ const createPost=async(data)=>{
               return res.status(200).send('Friend already added');
           }
 
+          user.friends.push(friend_id);
+          friend.friends.push(userId);
+
+          user.following += 1;
+         user.followers += 1;
+         friend.followers += 1;
+         user.following += 1;
+
 
           // case 1 : friend id is public
-          if(friend.privateOrPublic==='public')
-          {
-            user.friends.push(friend_id);
-            // sent message to user and also add notification in user friend notifi area
-          }else if(friend.privateOrPublic==='private')
-          {
-             // sent message that req is sent to user and and notifi his/her friend
-          }
+          // if(friend.privateOrPublic==='public')
+          // {
+          //   user.friends.push(friend_id);
+          //   // sent message to user and also add notification in user friend notifi area
+          // }else if(friend.privateOrPublic==='private')
+          // {
+          //    // sent message that req is sent to user and and notifi his/her friend
+          // }
 
           
   
@@ -953,6 +1032,10 @@ const createPost=async(data)=>{
         friend.friends = friend.friends.filter(friendId => friendId.toString() !== userId);
 
 
+        user.following -= 1;
+        user.followers -= 1;
+        friend.followers -= 1;
+        user.following -= 1;
 
 
         // Save the updated user and friend documents
@@ -1001,16 +1084,50 @@ app.post('/saveChats',auth,async(req,res)=>{
       let chat=new Chat({
         sender_id:req.body.sender_id,
          receiver_id:req.body.receiver_id,
-         messages:req.body.msg
+         messages:req.body.messages
       })
 
       await chat.save();
-      res.status(200).send({success:true,data:'chats inserted!',msg:req.body.msg,myId:req.body.sender_id,friendId:req.body.receiver_id})
+      res.status(200).send({success:true,data:'chats inserted!',chat})
     }catch(error)
     {
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 })
+
+app.post('/sendPostToFriends', auth, async (req, res) => {
+  // console.log('hello')
+  try {
+    const {shareId,  friendIds } = req.body;
+    
+    const senderId = req.user.id;
+    // console.log(req.body,senderId)
+
+    // Check that postId and friendIds array are provided
+    if (!shareId || !friendIds || friendIds.length === 0) {
+      return res.status(400).json({ message: 'Post ID and friends list are required.' });
+    }
+    
+    // Loop through friendIds to save a chat entry for each friend
+    const chatPromises = friendIds.map(async (friendId) => {
+      const chat = new Chat({
+        sender_id: senderId,
+        receiver_id: friendId,
+        messages: shareId, // Store the post ID in the messages field
+      });
+      return chat.save();
+    });
+
+    // Wait for all chat entries to be saved
+    await Promise.all(chatPromises);
+
+    res.status(200).send({ success: true, message: 'Post sent to friends successfully!' });
+  } catch (error) {
+    console.error('Error sending post to friends:', error);
+    res.status(500).json({ message: 'Failed to send post to friends.' });
+  }
+});
+
 
 app.get('/Like-img',auth,async(req,res)=>{
   try{
@@ -1272,7 +1389,7 @@ app.get('/changePrivateorPublic',auth,async(req,res)=>{
     const userId=req.user.id;
     const data=req.query.privateOrPublic
 
-   await User.findByIdAndUpdate(userId, { privateOrPublic: data }, { new: true })
+   await User.findByIdAndUpdate(userId, { privateOrPublic: 'public' }, { new: true })
   .then(updatedUser => {
     console.log(updatedUser);
     res.status(200).send({message:'updated privateOrPublic'})
@@ -1368,24 +1485,196 @@ io.on('connection',async(socket)=>{
    }
   })
 
-  socket.on('newChats',(data)=>{
+  socket.on('newChats',async(data)=>{
+    let d1=data;
+      if(ObjectId.isValid(data.messages))
+      {
+        console.log(d1.messages)
+        const reel = await Reel.findOne({ _id: d1.messages });
+        const reelData = reel ? reel.toObject() : {};  // Convert the mongoose document to a plain object
+        
+        if(reel){
+        const data = {
+          sender_id: d1.sender_id,
+          receiver_id: d1.receiver_id,
+          messages: d1.messages,
+          ...reelData, // This will merge the reel's document fields directly into the data object
+        };
+        // console.log(data)
+        socket.broadcast.emit('loadNewChats',data);
+      }else{
+        const post = await Post.findOne({ _id: d1.messages });
+        const postData = post ? post.toObject() : {}; 
+        const data = {
+          sender_id: d1.sender_id,
+          receiver_id: d1.receiver_id,
+          messages: d1.messages,
+          ...postData, // This will merge the reel's document fields directly into the data object
+        };
+        console.log('img d')
+        socket.broadcast.emit('loadNewChats',data);
+      }
+      }else{
+          
           socket.broadcast.emit('loadNewChats',data);
+      }
   })
 
-  socket.on('existChats',async(data)=>{
-   // console.log(data)
-   const chats = await Chat.find({
-     $or: [
-       { sender_id: data.sender_id, receiver_id: data.receiver_id },
-       { sender_id: data.receiver_id, receiver_id: data.sender_id }
-     ]
-   });
+  // socket.on('existChats',async(data)=>{
+  //  // console.log(data)
+  //  const chats = await Chat.find({
+  //    $or: [
+  //      { sender_id: data.sender_id, receiver_id: data.receiver_id },
+  //      { sender_id: data.receiver_id, receiver_id: data.sender_id }
+  //    ]
+  //  });
 
 
    
    
-     //  console.log(chats)
+  //    //  console.log(chats)
 
-      socket.emit('loadExistChats',{chats:chats})
-  })
+  //     socket.emit('loadExistChats',{chats:chats})
+  // })
+
+
+
+//   const { ObjectId } = require('mongoose').Types;
+//   socket.on('existChats', async (data) => {
+//     try {
+//       // Step 1: Find all chats between sender and receiver
+//       const chats = await Chat.find({
+//         $or: [
+//           { sender_id: data.sender_id, receiver_id: data.receiver_id },
+//           { sender_id: data.receiver_id, receiver_id: data.sender_id }
+//         ]
+//       });
+  
+//       // Step 2: Filter for chats where `messages` is a valid ObjectId and collect post IDs
+//       const postIds = chats
+//         .filter(chat => ObjectId.isValid(chat.messages))
+//         .map(chat => chat.messages);
+  
+//       // Step 3: Query all reels by post IDs in bulk
+//       const reels = await Reel.find({ _id: { $in: postIds } });
+//       const reelsMap = Object.fromEntries(reels.map(reel => [reel._id.toString(), reel]));
+  
+//       // Step 4: Separate chats with reel data from simple chats
+//       const chatsWithReels = [];
+  
+//       chats.forEach(chat => {
+//         if (reelsMap[chat.messages]) {
+//           chatsWithReels.push({ ...chat._doc, reel: reelsMap[chat.messages] });
+//         } 
+//       });
+  
+//       console.log(chatsWithReels," chats ", chats)
+//       // Emit both arrays back to the frontend
+//       socket.emit('loadExistChats', { chatsWithReels, chats });
+//     } catch (error) {
+//       console.error('Error loading existing chats:', error);
+//     }
+//   });
+
+// })
+
+const { ObjectId } = require('mongoose').Types;
+
+socket.on('existChats', async (data) => {
+  try {
+    // Step 1: Find all chats between sender and receiver
+    const chats = await Chat.find({
+      $or: [
+        { sender_id: data.sender_id, receiver_id: data.receiver_id },
+        { sender_id: data.receiver_id, receiver_id: data.sender_id }
+      ]
+    });
+
+    // Step 2: Filter for chats where `messages` is a valid ObjectId and collect post and reel IDs
+    const postIds = chats
+      .filter(chat => ObjectId.isValid(chat.messages))
+      .map(chat => chat.messages);
+
+    // Step 3: Query all reels by post IDs in bulk
+    const reels = await Reel.find({ _id: { $in: postIds } });
+    const reelsMap = Object.fromEntries(reels.map(reel => [reel._id.toString(), reel]));
+
+    // Step 4: Query all posts by post IDs in bulk
+    const posts = await Post.find({ _id: { $in: postIds } });
+    const postsMap = Object.fromEntries(posts.map(post => [post._id.toString(), post]));
+
+    // Step 5: Attach reel or post data to chats if the message is a post or reel ID
+    const chatsWithReelOrPostData = chats.map(chat => {
+      let messageData = {};
+
+      if (reelsMap[chat.messages]) {
+        // If message is a reel ID, add reel data
+        const reelData = reelsMap[chat.messages]._doc || reelsMap[chat.messages];
+        messageData = { ...reelData }; // Indicate it's a reel
+      } else if (postsMap[chat.messages]) {
+        // If message is a post ID, add post data
+        const postData = postsMap[chat.messages]._doc || postsMap[chat.messages];
+        messageData = { ...postData }; // Indicate it's a post
+      }
+
+      // Return the formatted object with sender_id, receiver_id, message, and the additional data (reel or post)
+      return {
+        sender_id: chat.sender_id,
+        receiver_id: chat.receiver_id,
+        messages: chat.messages,
+        ...messageData // This will add the post/reel data if present
+      };
+    });
+    
+    // Emit the modified chats back to the frontend
+    socket.emit('loadExistChats', { chats: chatsWithReelOrPostData });
+  } catch (error) {
+    console.error('Error loading existing chats:', error);
+  }
+});
+
+
+// socket.on('existChats', async (data) => {
+//   try {
+//     // Step 1: Find all chats between sender and receiver
+//     const chats = await Chat.find({
+//       $or: [
+//         { sender_id: data.sender_id, receiver_id: data.receiver_id },
+//         { sender_id: data.receiver_id, receiver_id: data.sender_id }
+//       ]
+//     });
+
+//     // Step 2: Filter for chats where `messages` is a valid ObjectId and collect post IDs
+//     const postIds = chats
+//       .filter(chat => ObjectId.isValid(chat.messages))
+//       .map(chat => chat.messages);
+
+//     // Step 3: Query all reels by post IDs in bulk
+//     const reels = await Reel.find({ _id: { $in: postIds } });
+//     const reelsMap = Object.fromEntries(reels.map(reel => [reel._id.toString(), reel]));
+
+//     // Step 4: Attach reel data to chats if the message is a post ID
+//     const chatsWithReelData = chats.map(chat => {
+//       if (reelsMap[chat.messages]) {
+//         const reelData = reelsMap[chat.messages]._doc || reelsMap[chat.messages]; // Access _doc if it exists
+    
+//         // Return the formatted object with sender_id, receiver_id, and reel data
+//         return {
+//           sender_id: chat.sender_id,
+//           receiver_id: chat.receiver_id,
+//           messages:chat.messages,
+//           ...reelData
+//         };
+//       }
+//       // If there's no reel data, return the original chat
+//       return chat;
+//     });
+     
+//     // console.log(chatsWithReelData)
+//     // Emit the modified chats back to the frontend
+//     socket.emit('loadExistChats', { chats: chatsWithReelData });
+//   } catch (error) {
+//     console.error('Error loading existing chats:', error);
+//   }
+// });
 })

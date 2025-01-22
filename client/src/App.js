@@ -1,6 +1,6 @@
 // App.js
 
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 import Register from './components/Register';
@@ -16,14 +16,21 @@ import LogOut from './components/LogOut';
 // import { ServerSocketProvider } from './components/ServerSocketProvider';
 import PrivateRoutes from './utils/PrivateRoutes';
 import PublicRoutes from './utils/PublicRoutes';
+import GlobalSecurityWrapper from './utils/GlobalSecurityWrapper';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState('');
 
+
+ 
+
+  
+
   return (
     <Router>
     {/* <ServerSocketProvider userId={userId} isLoggedIn={isLoggedIn}> */}
+     <GlobalSecurityWrapper> 
       <div className="App">
         
           <Routes>
@@ -35,7 +42,7 @@ function App() {
                               <Route path="/explore" element={<Explore />} />
                               <Route path="/search" element={<Search />} />
                               <Route path="/messages" element={<Messages />} />
-                              <Route path="/notifi" element={<Home />} />
+                              {/* <Route path="/notifi" element={<Home />} /> */}
                               <Route path="/logout" element={<LogOut setIsLoggedIn={setIsLoggedIn} />} />
 
              </Route>
@@ -47,7 +54,8 @@ function App() {
 
           </Routes>
        
-      </div>
+      </div> 
+      </GlobalSecurityWrapper> 
       {/* </ServerSocketProvider> */}
     </Router>
   );
